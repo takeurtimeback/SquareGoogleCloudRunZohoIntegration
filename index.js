@@ -8,7 +8,7 @@ const app = express();
 app.use(bodyParser.json());
 
 const client = new SecretManagerServiceClient();
-const PROJECT_ID = process.env.GCP_PROJECT || zoho-books-integration-481515;
+const PROJECT_ID = process.env.GCP_PROJECT || 'zoho-books-integration-481515';
 const ORG_ID = process.env.ZOHO_ORG_ID || '110002141516'; // Zoho Books Organization ID
 
 // Helper: fetch secret from Google Secret Manager
@@ -54,7 +54,8 @@ async function createSalesReceipt(accessToken, receiptData) {
   return response.data;
 }
 
-// Webhook endpoint for Square
+// Webhook endpoint for Square make sure to append /webhook to your deployed URL
+//https://squaregooglecloudrunzohointegration-188911918304.northamerica-northeast2.run.app/webhook
 app.post('/webhook', async (req, res) => {
   try {
     console.log('Webhook received:', req.body);
@@ -69,19 +70,7 @@ app.post('/webhook', async (req, res) => {
 
     // Example: map Square webhook data to Zoho sales receipt
     // Replace these IDs with actual Zoho customer/item IDs
-    const receiptData = {
-      customer_id: '123456789',
-      line_items: [
-        {
-          item_id: '987654321',
-          quantity: 1,
-          rate: 10,
-        },
-      ],
-      payment_option: 'Cash',
-      // Optional: add notes or reference from Square webhook
-      notes: `Square transaction: ${req.body.data?.object?.payment?.id || 'N/A'}`,
-    };
+   
 
     // Create the sales receipt
     const result = await createSalesReceipt(accessToken, receiptData);
