@@ -11,7 +11,7 @@ app.use(bodyParser.json());
 const client = new SecretManagerServiceClient();
 
 const PROJECT_ID = process.env.GCP_PROJECT || 'zoho-books-integration-481515';
-const ORG_ID = process.env.ZOHO_ORG_ID || '110002141516'; // Zoho Books Organization ID
+
 
 const squareAccessToken = 'EAAAl4VyU8OvT4IeMGdH41E8YaIHqVSUwzqiIZhvvwQXqLHWHpa-zXbZFbGxyWSu';
 const orgID = '110002141516';
@@ -152,8 +152,8 @@ app.get("/", async (req, res) => {
 app.post('/webhook', async (req, res) => {
   try {
     //fetch order ID from hook
-    const orderId = extractOrderId(req.body);
-    
+    const orderId = extractOrderID(req.body);
+    console.log("Received Order ID:", orderId);
     
     //if no order ID return 400 exit function
     if (!orderId) {
