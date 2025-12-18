@@ -8,6 +8,7 @@ const app = express();
 app.use(bodyParser.json());
 
 const client = new SecretManagerServiceClient();
+const orgID = '110002141516';
 const PROJECT_ID = process.env.GCP_PROJECT || 'zoho-books-integration-481515';
 const ORG_ID = process.env.ZOHO_ORG_ID || '110002141516'; // Zoho Books Organization ID
 
@@ -47,7 +48,7 @@ async function createSalesReceipt(accessToken, receiptData) {
         'Content-Type': 'application/json',
       },
       params: {
-        organization_id: ORG_ID,
+        organization_id: 110002141516,
       },
     }
   );
@@ -61,9 +62,13 @@ app.post('/webhook', async (req, res) => {
     console.log('Webhook received:', req.body);
 
     // Fetch Zoho secrets
-    const clientId = await getSecret('ZOHO_CLIENT_ID');
-    const clientSecret = await getSecret('ZOHO_CLIENT_SECRET');
-    const refreshToken = await getSecret('ZOHO_REFRESH_TOKEN');
+   // const clientId = await getSecret('ZOHO_CLIENT_ID');
+    // const clientSecret = await getSecret('ZOHO_CLIENT_SECRET');
+   // const refreshToken = await getSecret('ZOHO_REFRESH_TOKEN');
+    const clientId = '1000.FFWK1GZAWERDY5LPOP09T2BATX0BQJ';
+    const clientSecret = '8f033198a9c5a4ab49e94c0c49ee8c9662ae93fa48';
+    const refreshToken = '1000.69253ba57a70078e371cecac85e36fe8.54c4ecfb3d5df22ab5f014346adc0e47'
+   
 
     // Get access token
     const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
@@ -84,6 +89,7 @@ app.post('/webhook', async (req, res) => {
 });
 
 // Start server
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
