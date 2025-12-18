@@ -1,6 +1,7 @@
 {
-  "name": "square-zoho-integration",
+  "name": "square-zoho-webhook",
   "version": "1.0.0",
+  "description": "Receive Square webhooks and forward to Zoho Books",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -8,6 +9,6 @@
   "dependencies": {
     "express": "^4.18.2",
     "body-parser": "^1.20.2",
-    "@square/square": "^17.0.0"
+    "axios": "^1.7.2"
   }
 }
