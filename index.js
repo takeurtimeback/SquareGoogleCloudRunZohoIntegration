@@ -60,19 +60,24 @@ function parseOrderDat(orderDat){
 }
 
 function checkPayoutCost(orderDat){
+// if line items contain either DoorPayout or SoundPayout return true
+
+
 
 }
 function checkContainsTickets(orderDat){
+  //if line items contain ticket
 
 }
 function calculateArtistPayout(orderDat){
 
 }
 function checkCREDITorDEBIT(orderDat){
-
+ //if payments contain credit or debit
   return true;
 }
 function calculateSquareFees(orderDat){
+  
 
 }
 function parseSquareDatToZohoDat(orderDat){
@@ -123,13 +128,13 @@ async function createSalesReceipt(accessToken, receiptData) {
   return response.data;
 }
 
+
+
 app.get("/", async (req, res) => {
   res.send("Server is running!");
 
-  const clientId = '1000.FFWK1GZAWERDY5LPOP09T2BATX0BQJ';
-    const clientSecret = '8f033198a9c5a4ab49e94c0c49ee8c9662ae93fa48';
-    const refreshToken = '1000.69253ba57a70078e371cecac85e36fe8.54c4ecfb3d5df22ab5f014346adc0e47'
-    receiptData = '{"customer_name":"test","payment_method":"cash","line_items":[{"name":"Beer","quantity":1,"rate":5.13}]}';
+  
+  receiptData = '{"customer_name":"test","payment_method":"cash","line_items":[{"name":"Beer","quantity":1,"rate":5.13}]}';
   const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
   const result = await createSalesReceipt(accessToken, receiptData);
 });
