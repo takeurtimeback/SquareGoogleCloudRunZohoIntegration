@@ -41,7 +41,7 @@ async function getZohoAccessToken(clientId, clientSecret, refreshToken) {
 async function createSalesReceipt(accessToken, receiptData) {
   const response = await axios.post(
     'https://books.zoho.com/api/v3/salesreceipts',
-    receiptData,
+    {"customer_name":"test","payment_method":"cash","line_items":[{"name":"Beer","quantity":1,"rate":5.13}]},
     {
       headers: {
         Authorization: `Zoho-oauthtoken ${accessToken}`,
