@@ -3,7 +3,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
 const axios = require('axios');
-
+//track processed orders to avoid duplicates
+const processedOrders = new Set();
 const app = express();
 app.use(bodyParser.json());
 
@@ -37,7 +38,9 @@ async function fetchSquareOrder(orderId) {
   if (!orderId) {
     throw new Error("orderId is required");
   }
-
+    
+      
+    
   const response = await axios.get(
     `https://connect.squareup.com/v2/orders/${orderId}`,
     {
@@ -48,7 +51,7 @@ async function fetchSquareOrder(orderId) {
       }
     }
   );
-
+  
   return response.data;
 }
 
@@ -62,11 +65,12 @@ function parseOrderDat(orderDat){
 function checkPayoutCost(orderDat){
 // if line items contain either DoorPayout or SoundPayout return true
 
-
+return true;
 
 }
 function checkContainsTickets(orderDat){
   //if line items contain ticket
+  return true;
 
 }
 function calculateArtistPayout(orderDat){
@@ -75,6 +79,9 @@ function calculateArtistPayout(orderDat){
 function checkCREDITorDEBIT(orderDat){
  //if payments contain credit or debit
   return true;
+}
+function checkSheetDate(){
+
 }
 function calculateSquareFees(orderDat){
   
@@ -129,7 +136,7 @@ async function createSalesReceipt(accessToken, receiptData) {
 }
 
 
-
+//test response for root path
 app.get("/", async (req, res) => {
   res.send("Server is running!");
 
@@ -144,30 +151,101 @@ app.get("/", async (req, res) => {
 //https://squaregooglecloudrunzohointegration-188911918304.northamerica-northeast2.run.app/webhook
 app.post('/webhook', async (req, res) => {
   try {
+    //fetch order ID from hook
     const orderId = extractOrderId(req.body);
-
+    
+    
+    //if no order ID return 400 exit function
     if (!orderId) {
-      return res.status(400).send("Order ID not found");
+      return res.status(200).send("Order ID not Found");
     }
 
-    const squareOrder = await fetchSquareOrder(
-      orderId,
-      process.env.SQUARE_ACCESS_TOKEN
-    );
+       // Idempotency check
+    if (processedOrders.has(orderId)) {
+      console.log("Duplicate webhook ignored:", orderId);
+      //end funtion due to duplciate order
+      return res.status(200).send("Already processed");
+    }else{ 
+      processedOrders.add(orderId);
+    }
 
-    console.log("Square Order:", JSON.stringify(squareOrder, null, 2));
-
-    res.status(200).json({ success: true });
-
+    
+    //fetch square OrderInfo
+    const orderDat = await fetchSquareOrder(orderId,process.env.SQUARE_ACCESS_TOKEN);
+    //log order dat
+    console.log("Square Order:", JSON.stringify(orderDat, null, 2));
+    //respond sucess and continue processing
+    //res.status(200).json({ success: true });
+    //if error from try respond with 500
   } catch (err) {
     console.error(
       "Square API error:",
       err.response?.data || err.message
     );
-    res.status(500).send("Failed to fetch Square order");
+    return res.status(200).send("failed to process");
   }
 
+
+//continue function
+if(checkPayoutCost((orderDat))){
+  //create expense in zoho
+  return res.status(200).send("was a payout, done");
+}
+if(checkContainsTickets(orderDat)){
+  //find proper function for date.now
+  if(checkSheetDate()){
+    //check if date is not today
+    //if not update sheet clear amount and set date to day
+  }
+
+
+  //fetch row amount
+  calculateArtistPayout(orderDat);
+  //update row amount
+
+
+ //update google sheets(maybe check date updated ect.)
+}
+  
+if(checkCREDITorDEBIT(orderDat)){
+const squareFees =   calculateSquareFees(orderDat);
+if(squareFees > 0){
+  if(checkSheetDate()){
+    //check if date is not today
+    //if not update sheet clear amount and set date to day
+    //fetch row
+  //update row
+  }
+}
+}
+
+receiptData = parseOrderDat(orderDat);
+try{
+const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
+} catch (err) {
+    console.error(
+      "Auth Token Retrieval error:",
+      err.response?.data || err.message
+    );
+    return res.status(200).send("failed to gather acess token from zoho"); 
+  }
+if(!accessToken){
+    return res.status(200).send("failed to gather acess token from zoho");
+  }
+
+try{
+const result = await createSalesReceipt(accessToken, receiptData);
+} catch (err) {
+    console.error(
+      "Could not create sales recipt:",
+      err.response?.data || err.message
+    );
+    return res.status(200).send("failed to create sales recipt");;
+  }
+
+return res.status(200).send("successfully created sales recipt");
 });
+
 
 // Start server
 
