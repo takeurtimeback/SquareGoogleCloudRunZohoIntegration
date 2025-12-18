@@ -8,10 +8,15 @@ const app = express();
 app.use(bodyParser.json());
 
 const client = new SecretManagerServiceClient();
-const orgID = '110002141516';
+
 const PROJECT_ID = process.env.GCP_PROJECT || 'zoho-books-integration-481515';
 const ORG_ID = process.env.ZOHO_ORG_ID || '110002141516'; // Zoho Books Organization ID
 
+const squareAccessToken = 'EAAAl4VyU8OvT4IeMGdH41E8YaIHqVSUwzqiIZhvvwQXqLHWHpa-zXbZFbGxyWSu';
+const orgID = '110002141516';
+const clientId = '1000.FFWK1GZAWERDY5LPOP09T2BATX0BQJ';
+const clientSecret = '8f033198a9c5a4ab49e94c0c49ee8c9662ae93fa48';
+const refreshToken = '1000.69253ba57a70078e371cecac85e36fe8.54c4ecfb3d5df22ab5f014346adc0e47'
 // Helper: fetch secret from Google Secret Manager
 async function getSecret(secretName) {
   const [version] = await client.accessSecretVersion({
@@ -19,6 +24,67 @@ async function getSecret(secretName) {
   });
   return version.payload.data.toString('utf8');
 }
+
+
+function extractOrderID(orderDat){
+   return (
+    orderDat?.payload?.data?.object?.order_created?.order_id ||
+    null
+  );
+}
+
+async function fetchSquareOrder(orderId) {
+  if (!orderId) {
+    throw new Error("orderId is required");
+  }
+
+  const response = await axios.get(
+    `https://connect.squareup.com/v2/orders/${orderId}`,
+    {
+      headers: {
+        "Square-Version": "2025-10-16",
+        "Authorization": `Bearer ${squareAccessToken}`,
+        "Content-Type": "application/json"
+      }
+    }
+  );
+
+  return response.data;
+}
+
+
+function parseOrderDat(orderDat){
+
+
+
+}
+
+function checkPayoutCost(orderDat){
+
+}
+function checkContainsTickets(orderDat){
+
+}
+function calculateArtistPayout(orderDat){
+
+}
+function checkCREDITorDEBIT(orderDat){
+
+  return true;
+}
+function calculateSquareFees(orderDat){
+
+}
+function parseSquareDatToZohoDat(orderDat){
+
+}
+function fetchSheetsRow(sheetID, rowID){
+
+}
+function updateSheetsRow(sheetID, rowID, updateDat){
+  
+}
+
 
 // Helper: get Zoho access token using refresh token
 async function getZohoAccessToken(clientId, clientSecret, refreshToken) {
@@ -73,33 +139,29 @@ app.get("/", async (req, res) => {
 //https://squaregooglecloudrunzohointegration-188911918304.northamerica-northeast2.run.app/webhook
 app.post('/webhook', async (req, res) => {
   try {
-    console.log('Webhook received:', req.body);
+    const orderId = extractOrderId(req.body);
 
-    // Fetch Zoho secrets
-   // const clientId = await getSecret('ZOHO_CLIENT_ID');
-    // const clientSecret = await getSecret('ZOHO_CLIENT_SECRET');
-   // const refreshToken = await getSecret('ZOHO_REFRESH_TOKEN');
-    const clientId = '1000.FFWK1GZAWERDY5LPOP09T2BATX0BQJ';
-    const clientSecret = '8f033198a9c5a4ab49e94c0c49ee8c9662ae93fa48';
-    const refreshToken = '1000.69253ba57a70078e371cecac85e36fe8.54c4ecfb3d5df22ab5f014346adc0e47'
-   
+    if (!orderId) {
+      return res.status(400).send("Order ID not found");
+    }
 
-    // Get access token
-    const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
+    const squareOrder = await fetchSquareOrder(
+      orderId,
+      process.env.SQUARE_ACCESS_TOKEN
+    );
 
-    // Example: map Square webhook data to Zoho sales receipt
-    // Replace these IDs with actual Zoho customer/item IDs
-   
+    console.log("Square Order:", JSON.stringify(squareOrder, null, 2));
 
-    // Create the sales receipt
-    const result = await createSalesReceipt(accessToken, receiptData);
+    res.status(200).json({ success: true });
 
-    console.log('Sales receipt created:', result);
-    res.status(200).send({ success: true, zohoResponse: result });
-  } catch (error) {
-    console.error('Error processing webhook:', error.response?.data || error.message);
-    res.status(500).send({ success: false, error: error.message });
+  } catch (err) {
+    console.error(
+      "Square API error:",
+      err.response?.data || err.message
+    );
+    res.status(500).send("Failed to fetch Square order");
   }
+
 });
 
 // Start server
