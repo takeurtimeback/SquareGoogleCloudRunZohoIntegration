@@ -23,7 +23,7 @@ async function getSecret(secretName) {
 // Helper: get Zoho access token using refresh token
 async function getZohoAccessToken(clientId, clientSecret, refreshToken) {
   const response = await axios.post(
-    'https://accounts.zoho.com/oauth/v2/token',
+    'https://accounts.zohocloud.ca/oauth/v2/token',
     null,
     {
       params: {
