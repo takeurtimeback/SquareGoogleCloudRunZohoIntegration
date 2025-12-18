@@ -55,6 +55,15 @@ async function createSalesReceipt(accessToken, receiptData) {
   return response.data;
 }
 
+app.get("/", async (req, res) => {
+  res.send("Server is running!");
+
+
+  const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
+  const result = await createSalesReceipt(accessToken, receiptData);
+});
+
+
 // Webhook endpoint for Square make sure to append /webhook to your deployed URL
 //https://squaregooglecloudrunzohointegration-188911918304.northamerica-northeast2.run.app/webhook
 app.post('/webhook', async (req, res) => {
