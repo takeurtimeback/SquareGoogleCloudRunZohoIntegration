@@ -58,7 +58,9 @@ async function createSalesReceipt(accessToken, receiptData) {
 app.get("/", async (req, res) => {
   res.send("Server is running!");
 
-
+  const clientId = '1000.FFWK1GZAWERDY5LPOP09T2BATX0BQJ';
+    const clientSecret = '8f033198a9c5a4ab49e94c0c49ee8c9662ae93fa48';
+    const refreshToken = '1000.69253ba57a70078e371cecac85e36fe8.54c4ecfb3d5df22ab5f014346adc0e47'
   const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
   const result = await createSalesReceipt(accessToken, receiptData);
 });
