@@ -151,6 +151,7 @@ app.get("/", async (req, res) => {
 //https://squaregooglecloudrunzohointegration-188911918304.northamerica-northeast2.run.app/webhook
 app.post('/webhook', async (req, res) => {
   try {
+    console.log("Received Webhook:", JSON.stringify(req.body, null, 2));
     //fetch order ID from hook
     const orderId = extractOrderID(req.body);
     console.log("Received Order ID:", orderId);
