@@ -28,8 +28,10 @@ async function getSecret(secretName) {
 
 
 function extractOrderID(orderDat){
+  
    return (
-    orderDat?.payload?.data?.object?.order_created?.order_id ||
+    
+    orderDat?.data?.object?.order_created?.order_id ||
     null
   );
 }
