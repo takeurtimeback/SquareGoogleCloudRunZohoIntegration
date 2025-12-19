@@ -18,6 +18,9 @@ const orgID = '110002141516';
 const clientId = '1000.FFWK1GZAWERDY5LPOP09T2BATX0BQJ';
 const clientSecret = '8f033198a9c5a4ab49e94c0c49ee8c9662ae93fa48';
 const refreshToken = '1000.69253ba57a70078e371cecac85e36fe8.54c4ecfb3d5df22ab5f014346adc0e47'
+const soundPayoutAmount = 50;
+const doorPayoutAmount = 20;
+
 // Helper: fetch secret from Google Secret Manager
 async function getSecret(secretName) {
   const [version] = await client.accessSecretVersion({
@@ -64,7 +67,38 @@ function parseOrderDat(orderDat){
 
 }
 
+function calculateStaffPayout(orderDat){
+
+  const lineItems = orderDat?.response?.order?.line_items || [];
+
+ 
+  let totalPayout = 0;
+
+  for (const item of lineItems) {
+    const name = item.name?.toLowerCase() || "";
+    const quantity = Number(item.quantity || 0);
+
+    if (name.includes("doorpayout")) {
+      totalPayout += 50 * quantity;
+    }
+
+    if (name.includes("soundpayout")) {
+      totalPayout += 20 * quantity;
+    }
+  }
+
+  return totalPayout;
+}
+
+
+ 
+
 function checkPayoutCost(orderDat){
+  contains = false;
+  if( JSON.stringify(orderDat).includes("DoorPayout") || JSON.stringify(orderDat).includes("SoundPayout")){
+    contains = true;
+  }
+  return contains;
 // if line items contain either DoorPayout or SoundPayout return true
 
 return true;
@@ -72,19 +106,49 @@ return true;
 }
 function checkContainsTickets(orderDat){
   //if line items contain ticket
-  return true;
+  const lineItems = orderDat?.response?.order?.line_items || [];
 
-}
+  let ticketTotalCents = 0;
+
+  for (const item of lineItems) {
+    const name = item.name?.toLowerCase() || "";
+    const quantity = Number(item.quantity || 0);
+
+    // Adjust this condition if your ticket naming differs
+    const isTicket = name.includes("ticket");
+
+    if (!isTicket) continue;
+
+    const rateCents =
+      item.base_price_money?.amount ??
+      item.variation_total_price_money?.amount ??
+      0;
+
+    ticketTotalCents += rateCents * quantity;
+  }
+
+  return ticketTotalCents / 100;
+  };
+  
 function calculateArtistPayout(orderDat){
 
 }
 function checkCREDITorDEBIT(orderDat){
- //if payments contain credit or debit
-  return true;
+  const tenders = orderDat?.response?.order?.tenders || [];
+
+  return tenders.some(tender => {
+    const cardType = tender?.card_details?.card?.card_type;
+    return cardType === "CREDIT" || cardType === "DEBIT";
+  });
+ 
 }
+
+
 function checkSheetDate(){
 
 }
+
+
 function calculateSquareFees(orderDat){
   
 
@@ -97,6 +161,14 @@ function fetchSheetsRow(sheetID, rowID){
 }
 function updateSheetsRow(sheetID, rowID, updateDat){
   
+}
+
+async function createZohoExpense(catagoryID, amount,customer,acessToken){
+
+const response = await axios.post(
+    
+  );
+
 }
 
 
@@ -192,9 +264,17 @@ app.post('/webhook', async (req, res) => {
 
 //continue function
 if(checkPayoutCost((orderDat))){
-  //create expense in zoho
-  return res.status(200).send("was a payout, done");
+  
+  totalPayout = calculateStaffPayout(orderDat);
+
+  const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
+
+  const result = await createZohoExpense('Artist Payout', totalPayout, 'Dr. Artist', accessToken);
+
+  return res.status(200).send("was payout cost");
 }
+
+
 if(checkContainsTickets(orderDat)){
   //find proper function for date.now
   if(checkSheetDate()){
@@ -224,6 +304,7 @@ if(squareFees > 0){
 }
 
 receiptData = parseOrderDat(orderDat);
+
 try{
 const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
 } catch (err) {
