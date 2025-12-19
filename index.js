@@ -132,7 +132,13 @@ function checkContainsTickets(orderDat){
   
 function calculateArtistPayout(orderDat){
 
+
+  
 }
+
+
+
+
 function checkCREDITorDEBIT(orderDat){
   const tenders = orderDat?.response?.order?.tenders || [];
 
