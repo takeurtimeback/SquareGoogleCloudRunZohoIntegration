@@ -127,7 +127,7 @@ function parseOrderDat(orderDat){
 
   // Convert to JSON string
   console.log(JSON.stringify(receiptData).replace(/},/g, '}, '));
-  return JSON.stringify(receiptData);
+  return receiptData;
 }
 
 
@@ -283,7 +283,7 @@ async function createSalesReceipt(accessToken, receiptData) {
 
   const response = await axios.post(
     'https://www.zohoapis.ca/books/v3/salesreceipts',
-    {receiptData: JSON.parse(receiptData)},
+    {receiptData},
     {
       headers: {
         Authorization: `Zoho-oauthtoken ${accessToken}`,
@@ -328,7 +328,7 @@ app.post('/webhook', async (req, res) => {
     if (processedOrders.has(orderId)) {
       console.log("Duplicate webhook ignored:", orderId);
       //end funtion due to duplciate order
-      return res.status(200).send("Already processed");
+      return;
     }else{ 
       processedOrders.add(orderId);
     }
@@ -353,7 +353,7 @@ if(checkPayoutCost((orderDat))){
 
   let result = await createZohoExpense('Artist Payout', totalPayout, 'Dr. Artist', accessToken);
 
-  //return res.status(200).send("was payout cost");
+  return;
 }
 
 
@@ -391,7 +391,7 @@ const result = await createSalesReceipt(accessToken, receiptData);
       "Could not create sales recipt:",
       err.response?.data || err.message
     );
-    return res.status(200).send("failed to create sales recipt");;
+    return;
   }
 
 //return res.status(200).send("successfully created sales recipt");
