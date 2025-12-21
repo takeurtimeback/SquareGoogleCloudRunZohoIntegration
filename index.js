@@ -251,7 +251,7 @@ function calculateSquareFees(orderDat){
 }
 
 
-async function createZohoExpense(catagoryID, amount,customer,acessToken){
+async function createZohoExpense(catagoryID, amount,customer,accessToken){
 
 const response = await axios.post(
     
@@ -388,9 +388,9 @@ if(squareFees > 0){
 }
 
 receiptData = parseOrderDat(orderDat);
-
+let accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
 try{
-const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
+
 } catch (err) {
     console.error(
       "Auth Token Retrieval error:",
