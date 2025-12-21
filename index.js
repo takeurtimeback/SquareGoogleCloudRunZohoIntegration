@@ -7,8 +7,9 @@ const axios = require('axios');
 const processedOrders = new Set();
 const app = express();
 app.use(bodyParser.json());
-
+import { google } from "googleapis";
 const client = new SecretManagerServiceClient();
+const globalVariablesSheetID= '1jhf1wM7X5aPjQOpIS8MVrKzU33g7iTH7tQx262_7UkA';
 
 const PROJECT_ID = process.env.GCP_PROJECT || 'zoho-books-integration-481515';
 
@@ -39,6 +40,50 @@ function extractOrderID(orderDat){
   );
 }
 
+
+async function getCell(spreadsheetId, cell) {
+  const auth = new google.auth.GoogleAuth({
+    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+  });
+
+  const client = await auth.getClient();
+  const sheets = google.sheets({ version: "v4", auth: client });
+
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: cell, // e.g. "Config!B2"
+  });
+
+  return res.data.values?.[0]?.[0] ?? null;
+}
+
+async function setCell(spreadsheetId, range, value) {
+    //range Sheet1!A1:C3"
+    
+    
+    const auth = new google.auth.GoogleAuth({
+    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+  });
+
+  const client = await auth.getClient();
+  const sheets = google.sheets({ version: "v4", auth: client });
+
+    
+    
+    
+    const response = await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range, // e.g., "Sheet1!B2"
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [[value]],
+      },
+    });
+    return response.status === 200;
+ 
+  }
+
+
 async function fetchSquareOrder(orderId) {
   if (!orderId) {
     throw new Error("orderId is required");
@@ -63,9 +108,30 @@ async function fetchSquareOrder(orderId) {
 
 function parseOrderDat(orderDat){
 
+  // Safety check
+  if (!orderDat?.response?.order?.line_items) return null;
 
+    // Map line items to the Zoho format
+  const lineItems = orderDat.response.order.line_items.map(item => ({
+    name: item.name,
+    quantity: parseInt(item.quantity, 10),     // convert string to integer
+    rate: item.base_price_money.amount / 100   // convert cents to dollars
+  }));
 
+  // Construct Zoho receipt object
+  const receiptData = {
+    customer_name: 'test',
+    payment_method: 'cash',
+    line_items: lineItems
+  };
+
+  // Convert to JSON string
+  console.log("Receipt Data:", JSON.stringify(receiptData, null, 2));
+  return JSON.stringify(receiptData);
 }
+
+
+
 
 function calculateStaffPayout(orderDat){
 
@@ -79,11 +145,11 @@ function calculateStaffPayout(orderDat){
     const quantity = Number(item.quantity || 0);
 
     if (name.includes("doorpayout")) {
-      totalPayout += 50 * quantity;
+      totalPayout += doorPayoutAmount * quantity;
     }
 
     if (name.includes("soundpayout")) {
-      totalPayout += 20 * quantity;
+      totalPayout += soundPayoutAmount * quantity;
     }
   }
 
@@ -94,7 +160,7 @@ function calculateStaffPayout(orderDat){
  
 
 function checkPayoutCost(orderDat){
-  contains = false;
+  let contains = false;
   if( JSON.stringify(orderDat).includes("DoorPayout") || JSON.stringify(orderDat).includes("SoundPayout")){
     contains = true;
   }
@@ -136,9 +202,6 @@ function calculateArtistPayout(orderDat){
   
 }
 
-
-
-
 function checkCREDITorDEBIT(orderDat){
   const tenders = orderDat?.response?.order?.tenders || [];
 
@@ -150,8 +213,35 @@ function checkCREDITorDEBIT(orderDat){
 }
 
 
-function checkSheetDate(){
+async function checkSheetDate(type){
 
+  let dateCell = '';
+  let amountCell = '';
+  let account = '';
+  if(type = 'Fees'){
+    dateCell = 'Sheet1!B3';
+    amountCell = 'Sheet1!C3';
+    account = 'Square Fees';
+  }else{
+    dateCell = 'Sheet1!B2';
+    amountCell = 'Sheet1!C2';
+    account = 'Artist Payout';
+  }
+  let date = await getCell(globalVariablesSheetID, dateCell);
+  //compare to date.now
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0'); // months are 0-based
+  const day = String(today.getDate()).padStart(2, '0');
+  
+  let todaysDate =  `${year}${month}${day}`;
+  if(date != todaysDate){
+//clear amount and set date to today and create expense in zoho for amount in cell
+ await setCell(globalVariablesSheetID, dateCell, todaysDate);
+ await setCell(globalVariablesSheetID, amountCell, 0);
+    //create Expense
+    createZohoExpense(account, await getCell(globalVariablesSheetID, amountCell), 'Square Fees', await getZohoAccessToken(clientId, clientSecret, refreshToken));
+  }
 }
 
 
@@ -159,15 +249,7 @@ function calculateSquareFees(orderDat){
   
 
 }
-function parseSquareDatToZohoDat(orderDat){
 
-}
-function fetchSheetsRow(sheetID, rowID){
-
-}
-function updateSheetsRow(sheetID, rowID, updateDat){
-  
-}
 
 async function createZohoExpense(catagoryID, amount,customer,acessToken){
 
@@ -221,7 +303,7 @@ app.get("/", async (req, res) => {
   res.send("Server is running!");
 
   
-  receiptData = '{"customer_name":"test","payment_method":"cash","line_items":[{"name":"Beer","quantity":1,"rate":5.13}]}';
+  let receiptData = '{"customer_name":"test","payment_method":"cash","line_items":[{"name":"Beer","quantity":1,"rate":5.13}]}';
   const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
   const result = await createSalesReceipt(accessToken, receiptData);
 });
@@ -231,7 +313,7 @@ app.get("/", async (req, res) => {
 //https://squaregooglecloudrunzohointegration-188911918304.northamerica-northeast2.run.app/webhook
 app.post('/webhook', async (req, res) => {
   try {
-    orderDat = null;
+    let orderDat = null;
     console.log("Received Webhook:", JSON.stringify(req.body, null, 2));
     //fetch order ID from hook
     const orderId = extractOrderID(req.body);
@@ -271,7 +353,7 @@ app.post('/webhook', async (req, res) => {
 //continue function
 if(checkPayoutCost((orderDat))){
   
-  totalPayout = calculateStaffPayout(orderDat);
+  let totalPayout = calculateStaffPayout(orderDat);
 
   const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
 
@@ -283,29 +365,25 @@ if(checkPayoutCost((orderDat))){
 
 if(checkContainsTickets(orderDat)){
   //find proper function for date.now
-  if(checkSheetDate()){
-    //check if date is not today
-    //if not update sheet clear amount and set date to day
-  }
+  
+  await checkSheetDate('Payout');
 
-
+  let previousPayout = await getCell(globalVariablesSheetID, 'Sheet1!C2');
   //fetch row amount
-  calculateArtistPayout(orderDat);
+  let payout = calculateArtistPayout(orderDat) + Number(previousPayout);
   //update row amount
-
-
+  await setCell(globalVariablesSheetID, 'Sheet1!C2', payout);
  //update google sheets(maybe check date updated ect.)
 }
   
 if(checkCREDITorDEBIT(orderDat)){
 const squareFees =   calculateSquareFees(orderDat);
 if(squareFees > 0){
-  if(checkSheetDate()){
-    //check if date is not today
-    //if not update sheet clear amount and set date to day
-    //fetch row
-  //update row
-  }
+    checkSheetDate('Fees');
+    
+  let previousFees = await getCell(globalVariablesSheetID, 'Sheet1!C3');
+  squareFees = squareFees + Number(previousFees);
+  await setCell(globalVariablesSheetID, 'Sheet1!C3', squareFees);
 }
 }
 
