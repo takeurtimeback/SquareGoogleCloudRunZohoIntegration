@@ -109,7 +109,7 @@ async function fetchSquareOrder(orderId) {
 function parseOrderDat(orderDat){
 
   // Safety check
-  if (!orderDat?.response?.order?.line_items) return null;
+  
 
     // Map line items to the Zoho format
   const lineItems = orderDat.response.order.line_items.map(item => ({
