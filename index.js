@@ -280,10 +280,10 @@ async function getZohoAccessToken(clientId, clientSecret, refreshToken) {
 // Helper: create sales receipt in Zoho Books
 async function createSalesReceipt(accessToken, receiptData) {
   
-
+  console.log(receiptData);
   const response = await axios.post(
     'https://www.zohoapis.ca/books/v3/salesreceipts',
-    {receiptData},
+    null,
     {
       headers: {
         Authorization: `Zoho-oauthtoken ${accessToken}`,
@@ -291,6 +291,7 @@ async function createSalesReceipt(accessToken, receiptData) {
       },
       params: {
         organization_id: 110002141516,
+        JSONString: JSON.stringify(receiptData),
       },
     }
   );
