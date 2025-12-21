@@ -389,18 +389,6 @@ if(squareFees > 0){
 
 receiptData = parseOrderDat(orderDat);
 let accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
-try{
-
-} catch (err) {
-    console.error(
-      "Auth Token Retrieval error:",
-      err.response?.data || err.message
-    );
-    return res.status(200).send("failed to gather acess token from zoho"); 
-  }
-if(!accessToken){
-    return res.status(200).send("failed to gather acess token from zoho");
-  }
 
 try{
 const result = await createSalesReceipt(accessToken, receiptData);
