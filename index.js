@@ -49,7 +49,7 @@ async function getCell(spreadsheetId, cell) {
     spreadsheetId,
     range: cell, // e.g. "Config!B2"
   });
-
+  console.log(`Fetched cell ${cell}:`, res.data.values);
   return res.data.values?.[0]?.[0] ?? null;
 }
 
@@ -58,7 +58,7 @@ async function setCell(spreadsheetId, range, value) {
     
     console.log(`Setting cell ${range} in spreadsheet ${spreadsheetId} to value ${value}`);
     const auth = new google.auth.GoogleAuth({
-    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 
   const client = await auth.getClient();
