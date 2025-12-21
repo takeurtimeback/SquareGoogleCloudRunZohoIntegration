@@ -1,7 +1,7 @@
 // index.js
 import express from 'express';
 import bodyParser from 'body-parser';
-import { SecretManagerServiceClient } from ('@google-cloud/secret-manager');
+import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import axios from 'axios';
 //track processed orders to avoid duplicates
 const processedOrders = new Set();
