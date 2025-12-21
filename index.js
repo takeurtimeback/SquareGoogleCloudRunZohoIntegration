@@ -312,13 +312,13 @@ app.get("/", async (req, res) => {
 // Webhook endpoint for Square make sure to append /webhook to your deployed URL
 //https://squaregooglecloudrunzohointegration-188911918304.northamerica-northeast2.run.app/webhook
 app.post('/webhook', async (req, res) => {
-  try {
+  
     let orderDat = null;
     console.log("Received Webhook:", JSON.stringify(req.body, null, 2));
     //fetch order ID from hook
     const orderId = extractOrderID(req.body);
     console.log("Received Order ID:", orderId);
-    
+    res.status(200).send("Order ID not Found");
     //if no order ID return 400 exit function
     if (!orderId) {
       return res.status(200).send("Order ID not Found");
@@ -341,13 +341,7 @@ app.post('/webhook', async (req, res) => {
     //respond sucess and continue processing
     //res.status(200).json({ success: true });
     //if error from try respond with 500
-  } catch (err) {
-    console.error(
-      "Square API error:",
-      err.response?.data || err.message
-    );
-    return res.status(200).send("failed to process");
-  }
+  
 
 
 //continue function
