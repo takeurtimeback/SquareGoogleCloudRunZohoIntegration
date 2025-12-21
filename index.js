@@ -115,13 +115,14 @@ function parseOrderDat(orderDat){
   const lineItems = orderDat.response.order.line_items.map(item => ({
     name: item.name,
     quantity: parseInt(item.quantity, 10),     // convert string to integer
-    rate: item.base_price_money.amount / 100   // convert cents to dollars
+    rate: Number((item.base_price_money.amount / 100).toFixed(2))
+    // convert cents to dollars
   }));
 
   // Construct Zoho receipt object
   const receiptData = {
-    customer_name: 'test',
-    payment_method: 'cash',
+    
+    payment_method: 'Cash',
     line_items: lineItems
   };
 
