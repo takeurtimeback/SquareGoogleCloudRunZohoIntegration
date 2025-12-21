@@ -1,4 +1,5 @@
 // index.js
+//cash orders do not round properly in zoho
 import express from 'express';
 import bodyParser from 'body-parser';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
@@ -23,12 +24,6 @@ const soundPayoutAmount = 50;
 const doorPayoutAmount = 20;
 
 // Helper: fetch secret from Google Secret Manager
-async function getSecret(secretName) {
-  const [version] = await client.accessSecretVersion({
-    name: `projects/${PROJECT_ID}/secrets/${secretName}/versions/latest`,
-  });
-  return version.payload.data.toString('utf8');
-}
 
 
 function extractOrderID(orderDat){
@@ -42,6 +37,7 @@ function extractOrderID(orderDat){
 
 
 async function getCell(spreadsheetId, cell) {
+  console.log(`Fetching cell ${cell} from spreadsheet ${spreadsheetId}`);
   const auth = new google.auth.GoogleAuth({
     scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
   });
@@ -60,7 +56,7 @@ async function getCell(spreadsheetId, cell) {
 async function setCell(spreadsheetId, range, value) {
     //range Sheet1!A1:C3"
     
-    
+    console.log(`Setting cell ${range} in spreadsheet ${spreadsheetId} to value ${value}`);
     const auth = new google.auth.GoogleAuth({
     scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
   });
@@ -127,7 +123,7 @@ function parseOrderDat(orderDat){
   };
 
   // Convert to JSON string
-  console.log(JSON.stringify(receiptData).replace(/},/g, '}, '));
+  console.log("parsedDat:" + JSON.stringify(receiptData).replace(/},/g, '}, '));
   return receiptData;
 }
 
@@ -136,7 +132,7 @@ function parseOrderDat(orderDat){
 
 function calculateStaffPayout(orderDat){
 
-  const lineItems = orderDat?.response?.order?.line_items || [];
+  const lineItems = orderDat?.order?.line_items || [];
 
  
   let totalPayout = 0;
@@ -173,7 +169,7 @@ return true;
 }
 function checkContainsTickets(orderDat){
   //if line items contain ticket
-  const lineItems = orderDat?.response?.order?.line_items || [];
+  const lineItems = orderDat?.order?.line_items || [];
 
   let ticketTotalCents = 0;
 
@@ -197,14 +193,10 @@ function checkContainsTickets(orderDat){
   return ticketTotalCents / 100;
   };
   
-function calculateArtistPayout(orderDat){
 
-
-  
-}
 
 function checkCREDITorDEBIT(orderDat){
-  const tenders = orderDat?.response?.order?.tenders || [];
+  const tenders = orderDat?.order?.tenders || [];
 
   return tenders.some(tender => {
     const cardType = tender?.card_details?.card?.card_type;
@@ -215,7 +207,7 @@ function checkCREDITorDEBIT(orderDat){
 
 
 async function checkSheetDate(type){
-
+  console.log("Checking sheet date for type:", type);
   let dateCell = '';
   let amountCell = '';
   let account = '';
@@ -253,7 +245,7 @@ function calculateSquareFees(orderDat){
 
 
 async function createZohoExpense(catagoryID, amount,customer,accessToken){
-
+console.log("Creating Zoho Expense:");
 const response = await axios.post(
     
   );
@@ -281,7 +273,7 @@ async function getZohoAccessToken(clientId, clientSecret, refreshToken) {
 // Helper: create sales receipt in Zoho Books
 async function createSalesReceipt(accessToken, receiptData) {
   
-  console.log(receiptData);
+  
   const response = await axios.post(
     'https://www.zohoapis.ca/books/v3/salesreceipts',
     null,
@@ -296,6 +288,7 @@ async function createSalesReceipt(accessToken, receiptData) {
       },
     }
   );
+  console.log("created zoho reciept");
   return response.data;
 }
 
