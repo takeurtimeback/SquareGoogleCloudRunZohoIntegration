@@ -353,7 +353,7 @@ if(checkPayoutCost((orderDat))){
 
   let result = await createZohoExpense('Artist Payout', totalPayout, 'Dr. Artist', accessToken);
 
-  return res.status(200).send("was payout cost");
+  //return res.status(200).send("was payout cost");
 }
 
 
@@ -394,7 +394,7 @@ const result = await createSalesReceipt(accessToken, receiptData);
     return res.status(200).send("failed to create sales recipt");;
   }
 
-return res.status(200).send("successfully created sales recipt");
+//return res.status(200).send("successfully created sales recipt");
 });
 
 
