@@ -1,8 +1,8 @@
 // index.js
-const express = require('express');
-const bodyParser = require('body-parser');
-const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
-const axios = require('axios');
+const express = import('express');
+const bodyParser = import('body-parser');
+const { SecretManagerServiceClient } = import('@google-cloud/secret-manager');
+const axios = import('axios');
 //track processed orders to avoid duplicates
 const processedOrders = new Set();
 const app = express();
@@ -355,9 +355,9 @@ if(checkPayoutCost((orderDat))){
   
   let totalPayout = calculateStaffPayout(orderDat);
 
-  const accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
+  let accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
 
-  const result = await createZohoExpense('Artist Payout', totalPayout, 'Dr. Artist', accessToken);
+  let result = await createZohoExpense('Artist Payout', totalPayout, 'Dr. Artist', accessToken);
 
   return res.status(200).send("was payout cost");
 }
@@ -418,7 +418,12 @@ return res.status(200).send("successfully created sales recipt");
 
 // Start server
 
+app.use(express.json());
 const PORT = process.env.PORT || 8080;
+
+app.get('/', (req, res) => {
+  res.send('Server is running');
+});
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
