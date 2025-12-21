@@ -126,7 +126,7 @@ function parseOrderDat(orderDat){
   };
 
   // Convert to JSON string
-  console.log("Receipt Data:", JSON.stringify(receiptData, null, 2));
+  console.log(JSON.stringify(receiptData).replace(/},/g, '}, '));
   return JSON.stringify(receiptData);
 }
 
@@ -314,7 +314,7 @@ app.get("/", async (req, res) => {
 app.post('/webhook', async (req, res) => {
   
     let orderDat = null;
-    console.log("Received Webhook:", JSON.stringify(req.body, null, 2));
+    console.log("Received Webhook:", JSON.stringify(req.body).replace(/},/g, '}, '))
     //fetch order ID from hook
     const orderId = extractOrderID(req.body);
     console.log("Received Order ID:", orderId);
@@ -337,7 +337,7 @@ app.post('/webhook', async (req, res) => {
     //fetch square OrderInfo
     orderDat = await fetchSquareOrder(orderId,process.env.SQUARE_ACCESS_TOKEN);
     //log order dat
-    console.log("Square Order:", JSON.stringify(orderDat, null, 2));
+    console.log("Square Order:", JSON.stringify(orderDat).replace(/},/g, '}, '));
     //respond sucess and continue processing
     //res.status(200).json({ success: true });
     //if error from try respond with 500
@@ -381,7 +381,7 @@ if(squareFees > 0){
 }
 }
 
-receiptData = parseOrderDat(orderDat);
+let receiptData = parseOrderDat(orderDat);
 let accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
 
 try{
