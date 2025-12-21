@@ -121,8 +121,8 @@ function parseOrderDat(orderDat){
 
   // Construct Zoho receipt object
   const receiptData = {
-    
-    payment_method: 'Cash',
+    customer_id: '73925000000023273',
+    payment_method: 'cash',
     line_items: lineItems
   };
 
