@@ -1,8 +1,8 @@
 // index.js
-const express = import('express');
-const bodyParser = import('body-parser');
-const { SecretManagerServiceClient } = import('@google-cloud/secret-manager');
-const axios = import('axios');
+const express = require('express');
+const bodyParser = require('body-parser');
+const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
+const axios = require('axios');
 //track processed orders to avoid duplicates
 const processedOrders = new Set();
 const app = express();
