@@ -112,7 +112,7 @@ function parseOrderDat(orderDat){
   
 
     // Map line items to the Zoho format
-  const lineItems = orderDat.response.order.line_items.map(item => ({
+  const lineItems = orderDat.order.line_items.map(item => ({
     name: item.name,
     quantity: parseInt(item.quantity, 10),     // convert string to integer
     rate: Number((item.base_price_money.amount / 100).toFixed(2))
