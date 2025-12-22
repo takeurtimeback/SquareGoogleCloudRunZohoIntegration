@@ -259,8 +259,9 @@ async function createZohoExpense(accountId,amount, accessToken) {
         'Content-Type': 'application/json',
       },
       params: {
-        JSONString: JSON.stringify(receiptData),
+        
         organization_id: orgID,
+        JSONString: JSON.stringify(receiptData)
       },
     }
   );
