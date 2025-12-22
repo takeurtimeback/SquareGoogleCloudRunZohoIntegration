@@ -240,7 +240,21 @@ async function checkSheetDate(type){
 
 
 function calculateSquareFees(orderDat){
-  
+  const tenders = orderDat?.order?.tenders || [];
+  const cardType = tender?.card_details?.card?.card_type;
+  let amount = 0 ;
+  if(cardType === "CREDIT" ){
+    amount = orderDat?.order?.total_money?.amount * 0.025; //2.9% + 30 cents
+
+  }
+  if(cardType === "DEBIT"){
+    
+    amount = orderDat?.order?.total_money?.amount * 0.002 + 7;
+
+  }
+  return amount / 100; //return in dollars
+  ///also round
+    
 
 }
 
@@ -377,7 +391,7 @@ if(payout > 0){
 
   let previousPayout = await getCell(globalVariablesSheetID, 'Sheet1!C2');
   //fetch row amount
-  let payout = calculateArtistPayout(orderDat) + Number(previousPayout);
+  let payout = payout + Number(previousPayout);
   //update row amount
   await setCell(globalVariablesSheetID, 'Sheet1!C2', payout);
  //update google sheets(maybe check date updated ect.)
