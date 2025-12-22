@@ -14,7 +14,8 @@ const globalVariablesSheetID= '1jhf1wM7X5aPjQOpIS8MVrKzU33g7iTH7tQx262_7UkA';
 
 const PROJECT_ID = process.env.GCP_PROJECT || 'zoho-books-integration-481515';
 
-
+const ArtistPayoutAccountID= '73925000000035201';
+const BankFeesAccountID= '73925000000020545;'
 const squareAccessToken = 'EAAAl4VyU8OvT4IeMGdH41E8YaIHqVSUwzqiIZhvvwQXqLHWHpa-zXbZFbGxyWSu';
 const orgID = '110002141516';
 const clientId = '1000.FFWK1GZAWERDY5LPOP09T2BATX0BQJ';
@@ -214,11 +215,11 @@ async function checkSheetDate(type){
   if(type = 'Fees'){
     dateCell = 'Sheet1!B3';
     amountCell = 'Sheet1!C3';
-    account = 'Square Fees';
+    account = BankFeesAccountID;
   }else{
     dateCell = 'Sheet1!B2';
     amountCell = 'Sheet1!C2';
-    account = 'Artist Payout';
+    account = ArtistPayoutAccountID;
   }
   let date = await getCell(globalVariablesSheetID, dateCell);
   //compare to date.now
@@ -233,7 +234,7 @@ async function checkSheetDate(type){
  await setCell(globalVariablesSheetID, dateCell, todaysDate);
  await setCell(globalVariablesSheetID, amountCell, 0);
     //create Expense
-    createZohoExpense(account, await getCell(globalVariablesSheetID, amountCell), 'Square Fees', await getZohoAccessToken(clientId, clientSecret, refreshToken));
+    createZohoExpense(account, await getCell(globalVariablesSheetID, amountCell),  await getZohoAccessToken(clientId, clientSecret, refreshToken));
   }
 }
 
@@ -244,13 +245,29 @@ function calculateSquareFees(orderDat){
 }
 
 
-async function createZohoExpense(catagoryID, amount,customer,accessToken){
-console.log("Creating Zoho Expense:");
-const response = await axios.post(
-    
+async function createZohoExpense(accountId,amount, accessToken) {
+  const receiptData = {
+    account_id: accountId,
+      amount: Number(amount),
+  };
+  const response = await axios.post(
+    'https://www.zohoapis.ca/books/v3/expenses',
+    null,
+    {
+      headers: {
+        Authorization: `Zoho-oauthtoken ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      params: {
+        JSONString: JSON.stringify(receiptData),
+        organization_id: orgID,
+      },
+    }
   );
 
+  return response.data;
 }
+
 
 
 // Helper: get Zoho access token using refresh token
@@ -346,13 +363,13 @@ if(checkPayoutCost((orderDat))){
 
   let accessToken = await getZohoAccessToken(clientId, clientSecret, refreshToken);
 
-  let result = await createZohoExpense('Artist Payout', totalPayout, 'Dr. Artist', accessToken);
+  let result = await createZohoExpense(ArtistPayoutAccountID, totalPayout, accessToken);
 
   return;
 }
 
-
-if(checkContainsTickets(orderDat)){
+let payout = checkContainsTickets(orderDat);
+if(payout > 0){
   //find proper function for date.now
   
   await checkSheetDate('Payout');
